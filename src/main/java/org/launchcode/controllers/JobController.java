@@ -1,7 +1,8 @@
 package org.launchcode.controllers;
 
-import org.launchcode.models.forms.JobForm;
+import org.launchcode.models.*;
 import org.launchcode.models.data.JobData;
+import org.launchcode.models.forms.JobForm;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.Errors;
@@ -24,7 +25,9 @@ public class JobController {
     public String index(Model model, int id) {
 
         // TODO #1 - get the Job with the given ID and pass it into the view
-
+        Job wantedJob = null;
+        wantedJob = jobData.findById(id);
+        model.addAttribute("job", wantedJob);
         return "job-detail";
     }
 
@@ -37,11 +40,49 @@ public class JobController {
     @RequestMapping(value = "add", method = RequestMethod.POST)
     public String add(Model model, @Valid JobForm jobForm, Errors errors) {
 
+        if (errors.hasErrors()) {
+            model.addAttribute(new JobForm());
+            model.addAttribute(errors);
+            return "new-job";
+        }
+
+        JobData jData = JobData.getInstance();
+
+        Employer chosenEmployer = null;
+        Location chosenLocation = null;
+        PositionType chosenPositionType = null;
+        CoreCompetency chosenCoreCompetency = null;
+
+        for (Employer employer : jData.getEmployers().findAll()) {
+            if (employer.getId() == (jobForm.getEmployerId())) {
+                chosenEmployer = employer;
+            }
+        }
+        for (Location location : jData.getLocations().findAll()) {
+            if (location.getId() == jobForm.getLocationId()) {
+                chosenLocation = location;
+            }
+        }
+        for (PositionType position : jData.getPositionTypes().findAll()) {
+            if (position.getId() == jobForm.getPositionTypeId()) {
+                chosenPositionType = position;
+            }
+        }
+        for (CoreCompetency cCompet : jData.getCoreCompetencies().findAll()) {
+            if (cCompet.getId() == jobForm.getCoreCompetencyId()) {
+                chosenCoreCompetency = cCompet;
+            }
+        }
+
         // TODO #6 - Validate the JobForm model, and if valid, create a
         // new Job and add it to the jobData data store. Then
         // redirect to the job detail view for the new Job.
 
-        return "";
+
+        Job newjob = new Job( jobForm.getName(), chosenEmployer, chosenLocation, chosenPositionType, chosenCoreCompetency);
+        jData.add(newjob);
+        model.addAttribute("job", newjob);
+        return "job-detail";
 
     }
 }
